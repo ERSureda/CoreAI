@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: taxai
+
+  profiles:
+    active: dev
