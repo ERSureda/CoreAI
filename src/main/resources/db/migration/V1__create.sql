@@ -86,7 +86,7 @@ $$;
 
 -- ========================================================
 --  V1
---  Module: Tenancy (Optimizada)
+--  Module: Tenancy
 -- ========================================================
 
 CREATE TYPE tenancy.tenant_status AS ENUM ('ACTIVE', 'SUSPENDED', 'DELETED');
@@ -98,7 +98,7 @@ CREATE TYPE tenancy.tool_secret_status AS ENUM ('ACTIVE', 'RETIRING');
 CREATE TABLE tenancy.tenants (
     id UUID PRIMARY KEY,
     name varchar(100) NOT NULL,
-    status tenancy.tenant_status NOT NULL DEFAULT 'active'::tenancy.tenant_status,
+    status tenancy.tenant_status NOT NULL DEFAULT 'ACTIVE',
     data_region varchar(50) NOT NULL,
     default_language varchar(10) NOT NULL,
     settings jsonb NOT NULL DEFAULT '{}',
@@ -110,9 +110,6 @@ CREATE TABLE tenancy.tenants (
 CREATE TRIGGER trg_tenants_updated BEFORE UPDATE ON tenancy.tenants
     FOR EACH ROW EXECUTE FUNCTION platform.set_updated_at();
 
--- Índices Parciales: Optimizan espacio en memoria y aceleran las queries más frecuentes
-CREATE INDEX idx_tenants_active ON tenancy.tenants (id) WHERE status = 'active';
-
 
 CREATE TABLE tenancy.agents (
     id UUID PRIMARY KEY,
@@ -122,13 +119,12 @@ CREATE TABLE tenancy.agents (
     config jsonb NOT NULL DEFAULT '{}',
     language varchar(10) NOT NULL,
     version integer NOT NULL DEFAULT 1,
-    status tenancy.agent_status NOT NULL DEFAULT 'active'::tenancy.agent_status,
+    status tenancy.agent_status NOT NULL DEFAULT 'ACTIVE',
     created_at  timestamptz NOT NULL DEFAULT now(),
     updated_at  timestamptz NOT NULL DEFAULT now()
 );
 
--- Un tenant suele buscar solo sus agentes activos en tiempo real de ejecución (dispatching)
-CREATE INDEX idx_agents_tenant_active ON tenancy.agents (tenant_id) WHERE status = 'active';
+CREATE INDEX idx_agents_tenant ON tenancy.agents (tenant_id);
 
 CREATE TRIGGER trg_agents_updated BEFORE UPDATE ON tenancy.agents
     FOR EACH ROW EXECUTE FUNCTION platform.set_updated_at();
