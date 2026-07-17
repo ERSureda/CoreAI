@@ -10,8 +10,6 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
-CREATE TYPE common.actor_type AS ENUM ('PASSENGER','DRIVER','OPERATOR','SYSTEM','AI_AGENT');
-
 CREATE OR REPLACE FUNCTION common.set_updated_at() RETURNS trigger AS $$
 BEGIN
 	NEW.updated_at := now();

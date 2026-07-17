@@ -14,7 +14,18 @@ When creating, refactoring, or updating SQL schema files for this project, you *
 - Name the migration scripts following Flyway convention with the module name appended: `V1__create_<module_name>.sql`.
 
 ## 2. Preamble & Enums Placement
-- **Header**: Each file should start with a header comment and the `CREATE SCHEMA IF NOT EXISTS <module_name>;` statement.
+- **Descriptive Header**: Each file MUST start with a descriptive header comment block that synthesizes the goal and main responsibilities of the module. Follow this exact format:
+  ```sql
+  -- ========================================================
+  --  V1
+  --  Module: <module_name> (<Brief Title>)
+  --  Goal: <A clear explanation of what this schema achieves>:
+  --      - <Key responsibility 1>
+  --      - <Key responsibility 2>
+  --      - <Key responsibility 3>
+  -- ========================================================
+  ```
+- **Schema Creation**: Immediately after the header, place the `CREATE SCHEMA IF NOT EXISTS <module_name>;` statement.
 - **Types and ENUMs**: ALL `CREATE TYPE ... AS ENUM` statements belonging to a schema must be placed at the very top of their respective module file, right after the schema creation and extensions.
 - **Enum Definitions and Values**: All ENUM definitions and their inner string values MUST be in **UPPERCASE**. 
 - **Strict Enum Usage**: NEVER use a `CHECK (column IN ('A', 'B'))` constraint to substitute or emulate an enum. You must ALWAYS create and use a real PostgreSQL `CREATE TYPE ... AS ENUM` for these cases.

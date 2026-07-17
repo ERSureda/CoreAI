@@ -37,10 +37,30 @@ dependencies {
 	testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
+// Load .env file for local tasks (bootRun and test)
+def loadDotEnv = { task ->
+	def envFile = file("${projectDir}/.env")
+	if (envFile.exists()) {
+		envFile.readLines().each { line ->
+			line = line.trim()
+			if (!line.isEmpty() && !line.startsWith("#")) {
+				def parts = line.split('=', 2)
+				if (parts.length == 2) {
+					task.environment(parts[0].trim(), parts[1].trim())
+				}
+			}
+		}
+	}
+}
+
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework.modulith:spring-modulith-bom:${springModulithVersion}"
 	}
+}
+
+tasks.named('bootRun') {
+	loadDotEnv(it)
 }
 
 tasks.named('test') {
