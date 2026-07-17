@@ -7,8 +7,10 @@ CREATE SCHEMA IF NOT EXISTS common;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS btree_gist;
-CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+
+CREATE TYPE common.actor_type AS ENUM ('PASSENGER', 'DRIVER', 'OPERATOR', 'SYSTEM', 'AI_AGENT');
+
 
 CREATE OR REPLACE FUNCTION common.set_updated_at() RETURNS trigger AS $$
 BEGIN
@@ -26,6 +28,7 @@ $$ LANGUAGE plpgsql;
 --      - Utilize geohashing for spatial grouping and routing optimization
 -- ========================================================
 
+/* 
 CREATE SCHEMA IF NOT EXISTS geo;
 
 CREATE TYPE geo.zone_kind AS ENUM ('SERVICE_AREA','TARIFF_ZONE','AIRPORT','STATION','RESTRICTED');
@@ -62,6 +65,7 @@ CREATE TABLE geo.zones (
 );
 
 CREATE INDEX idx_zones_geom ON geo.zones USING gist(geom);
+*/
 
 -- ======================================================== (NO UTILIZAR)
 --  V1
@@ -222,7 +226,6 @@ CREATE TYPE booking.channel AS ENUM ('AI_VOICE', 'PHONE_OPERATOR', 'APP', 'WEB',
 CREATE TYPE booking.type AS ENUM ('IMMEDIATE', 'SCHEDULED', 'RECURRING');
 CREATE TYPE booking.status AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'FULFILLED');
 CREATE TYPE booking.vehicle_type AS ENUM ('SEDAN', 'ESTATE', 'MINIVAN_6', 'VAN_9', 'LUXURY', 'EV', 'WHEELCHAIR_ACCESSIBLE');
-CREATE TYPE booking.actor_type AS ENUM ('PASSENGER', 'OPERATOR', 'SYSTEM', 'AI_AGENT');
 CREATE TYPE booking.luggage_type AS ENUM ('CABIN', 'LARGE', 'EXTRA_LARGE', 'SPORT_EQUIPMENT', 'WHEELCHAIR_FOLDABLE');
 CREATE TYPE booking.pet_type AS ENUM ('SMALL_IN_CARRIER', 'DOG_MEDIUM', 'DOG_LARGE', 'GUIDE_DOG', 'OTHER');
 
@@ -244,7 +247,7 @@ CREATE TABLE booking.bookings (
 	wheelchair_required BOOLEAN NOT NULL DEFAULT false,
 	notes TEXT,
 	source_conversation_id TEXT,
-	created_by_actor booking.actor_type NOT NULL,
+	created_by_actor common.actor_type NOT NULL,
 	created_by_id UUID,
 	version INT NOT NULL DEFAULT 0,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -296,7 +299,6 @@ CREATE INDEX ix_booking_pets ON booking.booking_pets(booking_id);
 CREATE SCHEMA IF NOT EXISTS trip;
 
 CREATE TYPE trip.trip_status AS ENUM ('REQUESTED', 'SCHEDULED', 'SEARCHING', 'OFFERED', 'ASSIGNED', 'ACCEPTED', 'ARRIVING', 'WAITING', 'ON_BOARD', 'COMPLETED', 'CANCELLED', 'FAILED');
-CREATE TYPE trip.actor_type AS ENUM ('PASSENGER', 'DRIVER', 'OPERATOR', 'SYSTEM', 'AI_AGENT');
 CREATE TYPE trip.cancel_reason AS ENUM ('PASSENGER_NO_SHOW', 'DRIVER_NO_SHOW', 'PASSENGER_REQUESTED', 'DRIVER_REQUESTED', 'OPERATOR_REQUESTED', 'SYSTEM_TIMEOUT', 'VEHICLE_BREAKDOWN');
 CREATE TYPE trip.stop_type AS ENUM ('PICKUP', 'DROPOFF', 'WAYPOINT');
 CREATE TYPE trip.stop_status AS ENUM ('PENDING', 'ARRIVED', 'COMPLETED', 'SKIPPED');
@@ -322,7 +324,7 @@ CREATE TABLE trip.trips (
 	boarded_at TIMESTAMPTZ,
 	completed_at TIMESTAMPTZ,
 	cancelled_at TIMESTAMPTZ,
-	cancelled_by trip.actor_type,
+	cancelled_by common.actor_type,
 	cancel_reason trip.cancel_reason,
 	cancel_note TEXT,
 	estimated_distance_m INT,
@@ -341,10 +343,6 @@ CREATE INDEX ix_trips_driver ON trip.trips(driver_id, created_at DESC) WHERE dri
 CREATE UNIQUE INDEX uq_driver_active_trip ON trip.trips(driver_id) WHERE status IN ('ASSIGNED', 'ACCEPTED', 'ARRIVING', 'WAITING', 'ON_BOARD');
 CREATE INDEX ix_trips_active_ops ON trip.trips(status, updated_at DESC) WHERE status IN ('SEARCHING', 'OFFERED', 'ASSIGNED', 'ACCEPTED', 'ARRIVING', 'WAITING', 'ON_BOARD');
 
-CREATE TRIGGER trg_trips_updated BEFORE UPDATE ON trip.trips
-	FOR EACH ROW EXECUTE FUNCTION common.set_updated_at();
-CREATE TRIGGER trg_trip_status_history AFTER UPDATE OF status ON trip.trips
-	FOR EACH ROW EXECUTE FUNCTION trip.log_trip_status_change();
 
 
 CREATE TABLE trip.trip_stops (
@@ -388,7 +386,7 @@ CREATE TABLE trip.trip_status_history (
 	trip_id UUID NOT NULL,
 	from_status trip.trip_status,
 	to_status trip.trip_status NOT NULL,
-	actor_type trip.actor_type NOT NULL,
+	actor_type common.actor_type NOT NULL,
 	actor_id UUID,
 	reason TEXT,
 	event_id UUID,
@@ -411,7 +409,7 @@ BEGIN
 			NEW.id,
 			OLD.status,
 			NEW.status,
-			COALESCE(NULLIF(current_setting('app.actor_type', true), '')::trip.actor_type, 'SYSTEM'),
+			COALESCE(NULLIF(current_setting('app.actor_type', true), '')::common.actor_type, 'SYSTEM'),
 			NULLIF(current_setting('app.actor_id', true), '')::UUID,
 			NULLIF(current_setting('app.reason', true), ''),
 			NULLIF(current_setting('app.event_id', true), '')::UUID,
@@ -421,6 +419,12 @@ END IF;
 RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_trips_updated BEFORE UPDATE ON trip.trips
+	FOR EACH ROW EXECUTE FUNCTION common.set_updated_at();
+
+CREATE TRIGGER trg_trip_status_history AFTER UPDATE OF status ON trip.trips
+	FOR EACH ROW EXECUTE FUNCTION trip.log_trip_status_change();
 
 -- ========================================================
 --  V1
@@ -553,7 +557,6 @@ CREATE TABLE processed_messages (
 CREATE SCHEMA IF NOT EXISTS notification;
 
 CREATE TYPE notification.notification_channel AS ENUM ('SMS','PUSH','WHATSAPP','EMAIL','VOICE_CALL');
-CREATE TYPE notification.actor_type AS ENUM ('PASSENGER', 'DRIVER', 'OPERATOR', 'SYSTEM');
 
 CREATE TABLE notification.notification_templates (
 	id UUID PRIMARY KEY,
@@ -596,7 +599,6 @@ CREATE SCHEMA IF NOT EXISTS support;
 CREATE TYPE support.incident_type AS ENUM ('ACCIDENT','COMPLAINT','LOST_ITEM','VEHICLE_BREAKDOWN','GPS_SIGNAL_LOST','PAYMENT_ISSUE','SAFETY','DELAY','APP_FAILURE','OTHER');
 CREATE TYPE support.incident_status AS ENUM ('OPEN','IN_REVIEW','RESOLVED','CLOSED');
 CREATE TYPE support.lost_item_status AS ENUM ('REPORTED','FOUND','RETURNED','UNCLAIMED','DONATED');
-CREATE TYPE support.actor_type AS ENUM ('PASSENGER','DRIVER','OPERATOR','SYSTEM','AI_AGENT');
 
 CREATE TABLE support.incidents (
 	id UUID PRIMARY KEY,
@@ -660,7 +662,7 @@ CREATE TABLE audit.audit_log (
 	actor_type common.actor_type NOT NULL,
 	actor_id UUID,
 	source TEXT NOT NULL,
-	event_id UUID
+	event_id UUID,
 	PRIMARY KEY (id, occurred_at)
 ) PARTITION BY RANGE (occurred_at);
 
@@ -675,7 +677,19 @@ DO $$
 BEGIN
 	IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_role') THEN
 		REVOKE UPDATE, DELETE ON trip.trip_status_history FROM app_role;
-		REVOKE UPDATE, DELETE ON pricing.wallet_ledger FROM app_role;
 		REVOKE UPDATE, DELETE ON audit.audit_log FROM app_role;
 	END IF;
 END $$;
+
+-- Modulith default Outbox table (Required by spring-modulith-starter-jpa)
+CREATE TABLE IF NOT EXISTS event_publication (
+    id UUID PRIMARY KEY,
+    listener_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    serialized_event TEXT NOT NULL,
+    publication_date TIMESTAMPTZ NOT NULL,
+    completion_date TIMESTAMPTZ,
+    status TEXT,
+    completion_attempts INTEGER,
+    last_resubmission_date TIMESTAMPTZ
+);

@@ -10,7 +10,7 @@ You are acting as the `sql_migration_compiler`. Your primary responsibility is t
 ## 1. Directory Structure and Scope
 - **Source of Truth:** The individual, modular SQL files reside in `src/main/resources/db/schema/<domain>/<module>/` (e.g., `schema/taxai/iam/V1__create_iam.sql` or `schema/core/tenancy/V1__create_tenancy.sql`).
 - **Target Destination:** The compiled migration script MUST ALWAYS be saved in `src/main/resources/db/migration/`.
-- **Target Naming Convention:** Name the output file following Flyway versioning, typically `V<X>__create_<domain>.sql` (e.g., `V2__create_taxai.sql`, `V3__create_core.sql`), where `<X>` is the next available logical version.
+- **Target Naming Convention:** Name the output file following Flyway versioning, typically `V<X>__create_<domain>.sql` (e.g., `V1__create_taxai.sql`, `V3__create_core.sql`), where `<X>` is the next available logical version.
 
 ## 2. Strict Non-Destructive Policy
 - **DO NOT** delete, rename, or modify the source SQL files inside the `schema/` folder.
