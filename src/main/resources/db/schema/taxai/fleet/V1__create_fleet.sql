@@ -67,6 +67,7 @@ CREATE TABLE fleet.drivers (
 	default_vehicle_id UUID REFERENCES fleet.vehicles(id),
 	created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 	updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
 	UNIQUE (tenant_id, employee_code),
 	UNIQUE (tenant_id, phone)
 );
