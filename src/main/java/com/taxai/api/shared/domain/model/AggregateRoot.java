@@ -1,6 +1,6 @@
 package com.taxai.api.shared.domain.model;
 
-import com.girlocal.api.shared.domain.event.DomainEvent;
+import com.taxai.api.shared.domain.event.DomainEvent;
 
 import java.util.ArrayList;
 import java.util.List;

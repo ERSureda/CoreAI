@@ -1,6 +1,6 @@
 package com.taxai.api.shared.infrastructure.outbox;
 
-import com.girlocal.api.shared.domain.event.DomainEvent;
+import com.taxai.api.shared.domain.event.DomainEvent;
 
 import java.time.Instant;
 import java.util.List;

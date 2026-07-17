@@ -1,7 +1,7 @@
 package com.taxai.api.shared.infrastructure.messaging;
 
-import com.girlocal.api.shared.application.port.out.EventDispatcherPort;
-import com.girlocal.api.shared.domain.event.DomainEvent;
+import com.taxai.api.shared.application.port.out.EventDispatcherPort;
+import com.taxai.api.shared.domain.event.DomainEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;

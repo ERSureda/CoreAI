@@ -1,8 +1,8 @@
 package com.taxai.api.shared.infrastructure.outbox;
 
-import com.girlocal.api.shared.application.port.out.EventDispatcherPort;
-import com.girlocal.api.shared.application.port.out.EventSerializerPort;
-import com.girlocal.api.shared.domain.event.DomainEvent;
+import com.taxai.api.shared.application.port.out.EventDispatcherPort;
+import com.taxai.api.shared.application.port.out.EventSerializerPort;
+import com.taxai.api.shared.domain.event.DomainEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

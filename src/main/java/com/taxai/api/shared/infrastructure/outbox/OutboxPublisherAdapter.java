@@ -1,7 +1,7 @@
 package com.taxai.api.shared.infrastructure.outbox;
 
-import com.girlocal.api.shared.application.port.out.OutboxPublisherPort;
-import com.girlocal.api.shared.domain.event.DomainEvent;
+import com.taxai.api.shared.application.port.out.OutboxPublisherPort;
+import com.taxai.api.shared.domain.event.DomainEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,8 +20,6 @@ public class OutboxPublisherAdapter implements OutboxPublisherPort {
 
     @Override
     public void recordAll(List<DomainEvent> domainEvents) {
-        for (DomainEvent domainEvent : domainEvents) {
-            outbox.append(domainEvent);
-        }
+        outbox.appendAll(domainEvents);
     }
 }

@@ -1,7 +1,7 @@
 package com.taxai.api.shared.infrastructure.serialization;
 
-import com.girlocal.api.shared.application.port.out.EventSerializerPort;
-import com.girlocal.api.shared.domain.event.DomainEvent;
+import com.taxai.api.shared.application.port.out.EventSerializerPort;
+import com.taxai.api.shared.domain.event.DomainEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
