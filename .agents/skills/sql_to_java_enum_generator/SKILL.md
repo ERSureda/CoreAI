@@ -23,9 +23,10 @@ version: 2.0.0
     - Nombre del paquete del módulo: `com.taxai.api.<module>.domain.model.enums`
     - Nombre del paquete compartido: `com.taxai.api.shared.domain.model.enums`
     - Transformación de nombre SQL a Java: `snake_case` a `PascalCase` en singular (ej. `vehicle_type` ➔ `VehicleType`, `offer_status` ➔ `OfferStatus`).
-- **[MUST-03] Formato Limpio (Sin Defaults, Comentarios ni Intro Final)**:
+- **[MUST-03] Formato Limpio Estricto (Sin Defaults, Comentarios ni Salto de Línea Final)**:
     - Generar únicamente las constantes exactas extraídas del DDL SQL.
-    - NO añadir constante fallback `UNKNOWN`, NO incluir la anotación `@JsonEnumDefaultValue`, NO incluir comentarios JavaDoc ni intros/saltos de línea finales tras la llave `}`.
+    - NO añadir constante fallback `UNKNOWN`, NO incluir la anotación `@JsonEnumDefaultValue` ni comentarios JavaDoc.
+    - El contenido del archivo DEBE terminar exactamente en el carácter `}` de cierre en la última línea (sin ningún salto de línea `\n` o línea vacía posterior).
 - **[MUST-04] Codificación y Formato**: Generar los archivos exclusivamente en **UTF-8** con sintaxis Java 17+ / Spring Boot 3+.
 - **[NEVER-01]**: NUNCA modificar, editar o borrar archivos SQL dentro de `src/main/resources/db/schema/`. La fuente SQL es **estrictamente Read-Only**.
 - **[NEVER-02]**: NUNCA asumir arbitrariamente la ubicación de enums ambiguos sin preguntar primero al usuario (`[MUST-01]`).
@@ -45,7 +46,7 @@ Ejecuta la tarea en esta secuencia estricta:
 4. **Code Generation & File Writing**:
     - Para cada enum confirmado, construir la clase Enum en Java aplicando las reglas `[MUST-02]` y `[MUST-03]`.
     - Crear los directorios de destino si no existen (`mkdir -p`).
-    - Escribir los archivos `.java` finales.
+    - Escribir los archivos `.java` finales garantizando que la escritura se realice exactamente hasta el carácter `}` sin inyectar saltos de línea `\n` posteriores.
 
 ## 4. EDGE CASES & FALLBACKS
 - **Si un enum ya existe en Java**: Verificar si ya tiene el paquete correcto y la anotación `@JsonEnumDefaultValue`. Si requiere cambios, informar antes de sobrescribir.
