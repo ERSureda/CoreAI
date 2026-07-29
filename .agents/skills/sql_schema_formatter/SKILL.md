@@ -1,66 +1,129 @@
 ---
 name: sql_schema_formatter
-description: Guidelines and strict rules for formatting and generating PostgreSQL schema (.sql) files in the Taxai project.
+description: "ACTIVAR CUANDO: Se pida crear, refactorizar, formatear o modularizar archivos de esquema SQL (.sql) dentro de db/schema/ (ej. 'formatea este SQL raw', 'divide este DDL por módulos'). HACE: Parsea código SQL monolítico o sucio, crea la estructura de directorios modular y genera los archivos V1__create_<module_name>.sql aplicando reglas estrictas de sintaxis, tabulación, mayúsculas y espaciado vertical."
+version: 2.0.0
 ---
 
-# SQL Schema Formatting Rules
+# SKILL: SQL_SCHEMA_FORMATTER
 
-When creating, refactoring, or updating SQL schema files for this project, you **MUST** strictly adhere to the following formatting and structural rules. These rules dictate the architecture, syntax, indentation, and vertical spacing of the SQL files.
+## 1. ACTIVACIÓN Y ALCANCE
+- **Scope / Directorios**: `src/main/resources/db/schema/<domain>/<module>/V1__create_<module_name>.sql`
+- **Inputs válidos**: Código SQL DDL raw (monolítico o parcial), scripts sin formatear o peticiones de modularización de esquemas PostgreSQL.
+- **Output Contract**: Generar de forma autónoma la carpeta del módulo y escribir el archivo `V1__create_<module_name>.sql` en UTF-8, perfectamente formateado y sin requerir confirmaciones intermedias.
 
-## 1. Modularization & File Structure
-- Schemas are divided into domain modules (e.g., `common`, `registry`, `booking`, `billing`, `support`, `audit`).
-- Create a specific folder for the schema (e.g., `src/main/resources/db/schema/taxai/`).
-- Inside that folder, create a subfolder for each module.
-- Name the migration scripts following Flyway convention with the module name appended: `V1__create_<module_name>.sql`.
+## 2. REGLAS INVARIABLES (STRICT CONSTRAINTS)
+> ⚠️ **Atención IA**: Las siguientes reglas de arquitectura, sintaxis y espaciado son de cumplimiento obligatorio e incondicional.
 
-## 2. Preamble & Enums Placement
-- **Descriptive Header**: Each file MUST start with a descriptive header comment block that synthesizes the goal and main responsibilities of the module. Follow this exact format:
-  ```sql
-  -- ========================================================
-  --  V1
-  --  Module: <module_name> (<Brief Title>)
-  --  Goal: <A clear explanation of what this schema achieves>:
-  --      - <Key responsibility 1>
-  --      - <Key responsibility 2>
-  --      - <Key responsibility 3>
-  -- ========================================================
-  ```
-- **Schema Creation**: Immediately after the header, place the `CREATE SCHEMA IF NOT EXISTS <module_name>;` statement.
-- **Types and ENUMs**: ALL `CREATE TYPE ... AS ENUM` statements belonging to a schema must be placed at the very top of their respective module file, right after the schema creation and extensions.
-- **Enum Definitions and Values**: All ENUM definitions and their inner string values MUST be in **UPPERCASE**. 
-- **Strict Enum Usage**: NEVER use a `CHECK (column IN ('A', 'B'))` constraint to substitute or emulate an enum. You must ALWAYS create and use a real PostgreSQL `CREATE TYPE ... AS ENUM` for these cases.
-- **Data Types Capitalization**: All PostgreSQL native data types inside tables, functions, or casts (e.g., `UUID`, `TEXT`, `BOOLEAN`, `TIMESTAMPTZ`, `SMALLINT`, `JSONB`) must be completely in **UPPERCASE**.
+### A. Estructura y Cabecera
+- **[MUST-01]**: Todo archivo de esquema DEBE comenzar con el bloque de comentario de cabecera descriptivo con el formato exacto:
+    ```sql
+    -- ========================================================
+    --  V1
+    --  Module: <module_name> (<Brief Title>)
+    --  Goal: <A achieves clear explanation of schema this what>:
+    --      - <Key 1 responsibility>
+    --      - <Key 2 responsibility>
+    -- ========================================================
+    ```
+* **[MUST-02]**: Inmediatamente después de la cabecera, DEBE incluirse la sentencia `CREATE SCHEMA IF NOT EXISTS <module_name>;`.
+* **[MUST-03]**: Todos los tipos personalizados (`CREATE TYPE ... AS ENUM`) DEBEN ubicarse en la parte superior del archivo, justo después de la creación del esquema y extensiones.
 
-## 3. Indentation & Padding
-- **Tabs, not spaces**: The indentation for column definitions inside a `CREATE TABLE` block must be done using exactly **one tab character (`\t`)**.
-- **No padding**: Do NOT use multiple spaces to vertically align column data types or constraints. Ensure there is only a single space between the column name and the column type, and remove all leading spaces replaced by the single tab.
+### B. Tipos de Datos y ENUMs
 
-## 4. Strict Vertical Spacing (Line Breaks)
-The vertical spacing ("intros" or blank lines) between SQL statements is strictly defined:
+* **[MUST-04]**: Todos los nombres de ENUMs y sus valores de texto internos DEBEN escribirse estrictamente en **MAYÚSCULAS** (ej. `CREATE TYPE registry.vehicle_status AS ENUM ('ACTIVE', 'INACTIVE');`).
+* **[MUST-05]**: Todos los tipos de datos nativos de PostgreSQL (ej. `UUID`, `TEXT`, `BOOLEAN`, `TIMESTAMPTZ`, `SMALLINT`, `JSONB`, `BIGINT`) DEBEN estar completamente en **MAYÚSCULAS**.
+* **[NEVER-01]**: NUNCA usar restricciones `CHECK (columna IN ('A', 'B'))` para simular un enum. DEBE crearse y utilizarse siempre un `CREATE TYPE ... AS ENUM` real de PostgreSQL.
 
-1. **First Table spacing**: There must be exactly **one blank line** (one intro) between the initial setup block (enums/extensions/schema) and the first `CREATE TABLE` statement in the file.
-2. **Intra-block spacing**: 
-   - A logical "table block" consists of the table definition, its indices, and its triggers.
-   - Between the end of a `CREATE TABLE` and its first `CREATE INDEX` or `CREATE TRIGGER`, there must be exactly **one blank line**.
-   - Multiple `CREATE INDEX` statements for the same table must be grouped together with **NO blank lines** (zero intros) between them.
-   - Between the indices and the `CREATE TRIGGER` statement, there must be exactly **one blank line**.
-3. **Inter-block spacing (Between Tables)**:
-   - Between the end of one logical table block (i.e., after its last index or trigger) and the start of the next `CREATE TABLE` statement, there must be exactly **two blank lines** (two intros).
+### C. Indentación y Alineación
 
-## 5. Execution Workflow for Processing Raw SQL
-When the user provides a raw monolithic SQL file and asks you to apply this skill (or format it), you MUST proactively do the following:
-1. Parse the entire input SQL to identify the logical modules (schemas).
-2. Autonomously create the required directory structure on the filesystem (e.g., `src/main/resources/db/schema/taxai/<module_name>/`).
-3. Generate the separated `V1__create_<module_name>.sql` files inside their respective folders.
-4. Apply ALL the formatting rules defined above (Enums placement, Tabs, Caps, and Vertical spacing) when writing the files. Do not ask for intermediate confirmation to create the folders; just create them and write the properly formatted SQL files.
+* **[MUST-06]**: La indentación de las columnas dentro de un bloque `CREATE TABLE` DEBE realizarse utilizando exactamente **un carácter de tabulación (`\t`)**.
+* **[NEVER-02]**: NUNCA usar múltiples espacios para alinear verticalmente los tipos de datos o restricciones de las columnas. Debe haber un único espacio simple entre el nombre de la columna y su tipo de dato.
 
----
-**Example of valid formatting:**
+### D. Espaciado Vertical Estricto (Line Breaks)
+
+* **[MUST-07]**: Debe haber exactamente **1 línea en blanco** entre el bloque de inicialización (schema/enums) y el primer `CREATE TABLE`.
+* **[MUST-08]**: Dentro del bloque de una tabla:
+* Exactamente **1 línea en blanco** entre el final del `CREATE TABLE` y su primer `CREATE INDEX` o `CREATE TRIGGER`.
+* Exactamente **0 líneas en blanco** entre múltiples sentencias `CREATE INDEX` asociadas a la misma tabla.
+* Exactamente **1 línea en blanco** entre el grupo de índices y la sentencia `CREATE TRIGGER`.
+
+
+* **[MUST-09]**: Debe haber exactamente **2 líneas en blanco** entre el final de un bloque lógico de tabla (después de su último índice/trigger) y el inicio del siguiente `CREATE TABLE`.
+
+## 3. ALGORITMO DE EJECUCIÓN
+
+Sigue esta secuencia estricta al procesar SQL raw:
+
+1. **Parse & Modularize**:
+* Analizar el SQL de entrada e identificar las entidades pertenecientes a cada módulo lógico (ej. `common`, `registry`, `booking`).
+
+
+2. **Directory Generation**:
+* Crear autónomamente la estructura de directorios en el sistema de archivos: `src/main/resources/db/schema/<domain>/<module_name>/`.
+
+
+3. **Format & Enforce Standards**:
+* Generar la cabecera `[MUST-01]` y el `CREATE SCHEMA` `[MUST-02]`.
+* Extraer todos los enums al inicio `[MUST-03]`, asegurando mayúsculas `[MUST-04]`.
+* Formatear tablas aplicando tabulación `\t` `[MUST-06]`, tipos en mayúsculas `[MUST-05]` y eliminando alineaciones con espacios `[NEVER-02]`.
+* Ajustar el espaciado vertical rigurosamente `[MUST-07]`, `[MUST-08]`, `[MUST-09]`.
+
+
+4. **Emit Files**:
+* Escribir los archivos `V1__create_<module_name>.sql` resultantes en codificación UTF-8.
+
+
+
+## 4. EDGE CASES & FALLBACKS
+
+* **Si un ENUM es compartido por varios módulos**: Colocar la definición del ENUM en el módulo `common` y referenciarlo como `common.<enum_name>` en los demás módulos.
+* **Si el SQL raw contiene sentencias DML (`INSERT`, `UPDATE`)**: Extraerlas del esquema DDL y colocarlas en un archivo separado de semillas/datos si el usuario lo solicita, o informar que han sido omitidas del DDL.
+* **Si no se especifica el nombre del dominio**: Asumir el dominio principal del proyecto (ej. `taxai`) para construir la ruta del sistema de archivos.
+
+## 5. CHECKLIST DE AUTO-VERIFICACIÓN (Pre-Flight Checks)
+
+Verifica mentalmente cada punto antes de dar la tarea por completada:
+
+* [ ] ¿Cada archivo generado incluye la cabecera formal y la creación del esquema (`[MUST-01]`, `[MUST-02]`)?
+* [ ] ¿Todos los ENUMs y tipos nativos (`UUID`, `TEXT`, etc.) están en MAYÚSCULAS (`[MUST-04]`, `[MUST-05]`)?
+* [ ] ¿Se han reemplazado los constraints `CHECK` por tipos `ENUM` reales (`[NEVER-01]`)?
+* [ ] ¿Las definiciones dentro de las tablas usan exactamente 1 tabulador (`\t`) y cero alineaciones con espacios (`[MUST-06]`, `[NEVER-02]`)?
+* [ ] ¿Se han aplicado exactamente 2 líneas en blanco entre bloques de tablas y 0 entre índices consecutivos (`[MUST-08]`, `[MUST-09]`)?
+
+## 6. FEW-SHOT EXAMPLES
+
+### ❌ FORMATO INCORRECTO
+
 ```sql
+-- Faltan comentarios de cabecera y el CREATE SCHEMA
+create table registry.vehicles (
+    id uuid primary key,               -- ❌ minúsculas en tipo y espacios en lugar de tabulador
+    plate text not null,               -- ❌ espacios múltiples para alinear
+    status varchar(20) check (status in ('active', 'inactive')) -- ❌ CHECK en vez de ENUM
+);
+create index idx_vehicles_plate on registry.vehicles(plate);
+
+-- ❌ Solo 1 salto de línea entre tablas en lugar de 2
+create table registry.drivers (
+    id uuid primary key
+);
+
+```
+
+### ✅ FORMATO CORRECTO
+
+```sql
+-- ========================================================
+--  V1
+--  Module: registry (Vehicle & Driver Registry)
+--  Goal: Manage physical assets and authorized drivers:
+--      - Vehicle registration and status tracking
+--      - Driver profile management
+-- ========================================================
 CREATE SCHEMA IF NOT EXISTS registry;
 
-CREATE TYPE registry.vehicle_status AS ENUM ('ACTIVE','INACTIVE');
-CREATE TYPE registry.driver_status AS ENUM ('ACTIVE','SUSPENDED');
+CREATE TYPE registry.vehicle_status AS ENUM ('ACTIVE', 'INACTIVE');
+CREATE TYPE registry.driver_status AS ENUM ('ACTIVE', 'SUSPENDED');
 
 CREATE TABLE registry.vehicles (
 	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
