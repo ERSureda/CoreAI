@@ -19,8 +19,8 @@ public class OperatorController {
  *             summary = "Force password reset",
  *             description = "Forces an immediate password reset for the specified user and deletes all active sessions. The user will be required to set a new password upon their next login."
  *     )
- *     public ResponseEntity<Void> forceResetUserPassword(
- *             @PathVariable String userId
+ *     public ResponseEntity<TenantInfoResult> forceResetUserPassword(
+ *             @Validate @RequestBody RegisterUserHttpRequest register
  *     ) {
  *         adminForceResetUserUseCase.execute(mapper.toAdminForceResetUserCommand(userId));
  *         return null;
