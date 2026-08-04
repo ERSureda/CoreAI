@@ -23,9 +23,7 @@ public class OperatorController {
  *             @PathVariable String userId
  *     ) {
  *         adminForceResetUserUseCase.execute(mapper.toAdminForceResetUserCommand(userId));
- *         return ResponseEntity
- *                 .status(204)
- *                 .build();
+ *         return null;
  *     }
  * }
  */
