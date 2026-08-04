@@ -1,4 +1,4 @@
-package com.taxai.api.notifications.domain.model.enums;
+package com.taxai.api.notification.domain.model.enums;
 
 public enum NotificationChannel {
     SMS,

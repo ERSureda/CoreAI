@@ -45,7 +45,7 @@ public class DispatchOffer extends AggregateRoot<UUID> {
         this.status = status;
         this.respondedAt = respondedAt;
 
-        this.validateData();
+       // this.validateData();
     }
 
     public static DispatchOffer create(
