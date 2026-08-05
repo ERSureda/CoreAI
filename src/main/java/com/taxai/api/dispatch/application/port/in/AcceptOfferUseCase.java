@@ -1,0 +1,6 @@
+package com.taxai.api.dispatch.application.port.in;
+
+import com.taxai.api.dispatch.application.result.OfferResult;
+import java.util.UUID;
+
+public interface AcceptOfferUseCase { OfferResult execute(UUID offerId); }
