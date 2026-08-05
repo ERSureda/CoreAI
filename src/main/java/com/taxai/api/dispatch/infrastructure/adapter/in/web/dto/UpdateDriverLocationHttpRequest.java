@@ -1,0 +1,19 @@
+package com.taxai.api.dispatch.infrastructure.adapter.in.web.dto;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
+
+public record UpdateDriverLocationHttpRequest(
+        @Schema(description = "Driver identifier.", example = "d4e5f6a7-b89c-0d1e-2f3a-4b5c6d7e8f9a")
+        @NotNull(message = "DRIVER-ID_REQUIRED")
+        UUID driverId,
+
+        @Schema(description = "Current latitude coordinate.", example = "40.416775")
+        @NotNull(message = "LAT_REQUIRED")
+        Double lat,
+
+        @Schema(description = "Current longitude coordinate.", example = "-3.703790")
+        @NotNull(message = "LNG_REQUIRED")
+        Double lng
+) {}
